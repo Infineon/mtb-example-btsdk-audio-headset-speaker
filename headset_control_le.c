@@ -1,10 +1,10 @@
 /*
- * Copyright 2016-2020, Cypress Semiconductor Corporation or a subsidiary of
- * Cypress Semiconductor Corporation. All Rights Reserved.
+ * Copyright 2016-2021, Cypress Semiconductor Corporation (an Infineon company) or
+ * an affiliate of Cypress Semiconductor Corporation.  All rights reserved.
  *
  * This software, including source code, documentation and related
- * materials ("Software"), is owned by Cypress Semiconductor Corporation
- * or one of its subsidiaries ("Cypress") and is protected by and subject to
+ * materials ("Software") is owned by Cypress Semiconductor Corporation
+ * or one of its affiliates ("Cypress") and is protected by and subject to
  * worldwide patent protection (United States and foreign),
  * United States copyright laws and international treaty provisions.
  * Therefore, you may use this Software only as provided in the license
@@ -13,7 +13,7 @@
  * If no EULA applies, Cypress hereby grants you a personal, non-exclusive,
  * non-transferable license to copy, modify, and compile the Software
  * source code solely for use in connection with Cypress's
- * integrated circuit products. Any reproduction, modification, translation,
+ * integrated circuit products.  Any reproduction, modification, translation,
  * compilation, or representation of this Software except as specified
  * above is prohibited without the express written permission of Cypress.
  *
@@ -254,6 +254,11 @@ attribute_t gauAttributes[] =
     { HANDLE_HSENS_DEV_INFO_SERVICE_CHAR_SYSTEM_ID_VAL, sizeof(btheadset_sensor_char_system_id_value),  btheadset_sensor_char_system_id_value },
     { HANDLE_HSENS_BATTERY_SERVICE_CHAR_LEVEL_VAL,      1,                                            &btheadset_battery_level },
 };
+
+#if BTSTACK_VER >= 0x01020000
+wiced_bt_db_hash_t headset_db_hash;
+#endif
+
 /******************************************************
  *               Function Definitions
  ******************************************************/
@@ -286,7 +291,12 @@ void hci_control_le_enable( void )
     WICED_BT_TRACE( "hci_control_le_enable\n" );
 
     /*  GATT DB Initialization */
+#if BTSTACK_VER >= 0x01020000
+    gatt_status = wiced_bt_gatt_db_init(gatt_server_db, sizeof(gatt_server_db),
+            headset_db_hash);
+#else
     gatt_status = wiced_bt_gatt_db_init(gatt_server_db, sizeof(gatt_server_db));
+#endif
 
     WICED_BT_TRACE("wiced_bt_gatt_db_init %d\n", gatt_status);
 

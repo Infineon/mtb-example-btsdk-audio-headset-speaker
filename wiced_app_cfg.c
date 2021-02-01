@@ -1,10 +1,10 @@
 /*
- * Copyright 2016-2020, Cypress Semiconductor Corporation or a subsidiary of
- * Cypress Semiconductor Corporation. All Rights Reserved.
+ * Copyright 2016-2021, Cypress Semiconductor Corporation (an Infineon company) or
+ * an affiliate of Cypress Semiconductor Corporation.  All rights reserved.
  *
  * This software, including source code, documentation and related
- * materials ("Software"), is owned by Cypress Semiconductor Corporation
- * or one of its subsidiaries ("Cypress") and is protected by and subject to
+ * materials ("Software") is owned by Cypress Semiconductor Corporation
+ * or one of its affiliates ("Cypress") and is protected by and subject to
  * worldwide patent protection (United States and foreign),
  * United States copyright laws and international treaty provisions.
  * Therefore, you may use this Software only as provided in the license
@@ -13,7 +13,7 @@
  * If no EULA applies, Cypress hereby grants you a personal, non-exclusive,
  * non-transferable license to copy, modify, and compile the Software
  * source code solely for use in connection with Cypress's
- * integrated circuit products. Any reproduction, modification, translation,
+ * integrated circuit products.  Any reproduction, modification, translation,
  * compilation, or representation of this Software except as specified
  * above is prohibited without the express written permission of Cypress.
  *
@@ -277,7 +277,12 @@ const wiced_bt_cfg_settings_t wiced_bt_cfg_settings =
         .server_max_links               = 2,                                                           /**< Server config: maximum number of remote clients connections allowed by the local */
         .max_attr_len                   = 360,                                                         /**< Maximum attribute length; gki_cfg must have a corresponding buffer pool that can hold this length */
 #if !defined(CYW20706A2)
-        .max_mtu_size                   = 365                                                          /**< Maximum MTU size for GATT connections, should be between 23 and (max_attr_len + 5) */
+        .max_mtu_size                   = 365,                                                         /**< Maximum MTU size for GATT connections, should be between 23 and (max_attr_len + 5) */
+#endif
+#if BTSTACK_VER > 0x01020000
+        .max_db_service_modules         = 10,                                                          /**< Maximum number of service modules in the DB*/
+        .max_gatt_bearers               = 3,                                                           /**< Maximum number of allowed gatt bearers */
+        .use_gatt_over_br_edr           = 1,                                                           /**< set to 1 to enable gatt over br edr */
 #endif
     },
 
@@ -300,7 +305,12 @@ const wiced_bt_cfg_settings_t wiced_bt_cfg_settings =
         .max_le_channels                = 0,                                                           /**< Maximum number of application-managed LE channels */
 #if !defined(CYW20706A2)
         /* LE L2cap fixed channel configuration */
-        .max_le_l2cap_fixed_channels    = 0                                                            /**< Maximum number of application managed fixed channels supported (in addition to mandatory channels 4, 5 and 6). > */
+        .max_le_l2cap_fixed_channels    = 0,                                                           /**< Maximum number of application managed fixed channels supported (in addition to mandatory channels 4, 5 and 6). > */
+#endif
+#if BTSTACK_VER >= 0x01020000
+        .max_rx_mtu                     = 1000,                                                        /**< Maximum RX MTU allowed */
+        .max_ertm_chnls                 = 0,                                                           /**< Maximum ERTM channels */
+        .max_ertm_tx_win                = 0,                                                           /**< Maximum ERTM TX Window */
 #endif
     },
 
@@ -319,6 +329,13 @@ const wiced_bt_cfg_settings_t wiced_bt_cfg_settings =
         .max_links                      = MAX_CONNECTED_RCC_DEVICES                                    /**< Maximum simultaneous remote control links */
     },
 
+#if BTSTACK_VER > 0x01020000
+    .hidd_cfg =                                                                                        /**< Hidd configuration */
+    {
+        .max_links                      = 0,                                                           /**< Maximum number of hid servers connected */
+    },
+#endif
+
     /* LE Address Resolution DB size  */
     .addr_resolution_db_size            = 5,                                                           /**< LE Address Resolution DB settings - effective only for pre 4.2 controller*/
 
@@ -326,8 +343,10 @@ const wiced_bt_cfg_settings_t wiced_bt_cfg_settings =
     .max_mtu_size                       = 365,                                                         /**< Maximum MTU size for GATT connections, should be between 23 and (max_attr_len + 5) */
     .max_pwr_db_val                     = 12                                                           /**< Max. power level of the device */
 #else
+#ifndef BTSTACK_VER
     /* Maximum number of buffer pools */
     .max_number_of_buffer_pools         = 10,                                                           /**< Maximum number of buffer pools in p_btm_cfg_buf_pools and by wiced_create_pool */
+#endif
 
     /* Interval of  random address refreshing */
 #ifdef FASTPAIR_ENABLE
@@ -335,12 +354,29 @@ const wiced_bt_cfg_settings_t wiced_bt_cfg_settings =
 #else
     .rpa_refresh_timeout                = 0,                                                           /**< Interval of  random address refreshing - secs */
 #endif
+#if BTSTACK_VER >= 0x01020000
+    .stack_scratch_size                 = WICED_BT_CFG_DEFAULT_STACK_SCRATCH_SIZE,                     /**< Memory area reserved for the stack transient memory requirements */
+#endif
     /* BLE white list size */
     .ble_white_list_size                = 0,                                                           /**< Maximum number of white list devices allowed. Cannot be more than 128 */
 #endif
 
-#if defined(CYW20719B2) || defined(CYW20721B2) || defined(CYW20819A1) || defined (CYW20820A1)
-    .default_ble_power_level            = 0                                                            /**< Default LE power level, Refer lm_TxPwrTable table for the power range */
+#if defined(CYW20719B2) || defined(CYW20721B2) || defined(CYW20819A1) || defined (CYW20820A1) || BTSTACK_VER >= 0x01020000
+    .default_ble_power_level            = 12,                                                          /**< Default LE power level, Refer lm_TxPwrTable table for the power range */
+#endif
+#if BTSTACK_VER == 0x01020000
+    .max_gatt_bearers                   = 3,                                                           /**< Maximum number of allowed gatt bearers */
+    .use_gatt_over_br_edr               = 1,                                                           /**< set to 1 to enable gatt over br edr */
+#elif BTSTACK_VER > 0x01020000
+    .num_vse_callbacks                  = 0,
+    .isoc_cfg =                                                                                        /**< Ischoronous Connection configuration */
+    {
+        .max_cis_conn                   = 0,                                                           /**< Max Number of CIS connections */
+        .max_cig_count                  = 0,                                                           /**< Max Number of CIG connections */
+        .max_sdu_size                   = 0,
+        .max_buffers_per_cis            = 0,
+    },
+    .max_num_app_dtcb                   = 0,
 #endif
 };
 
@@ -453,6 +489,7 @@ const uint8_t btheadset_sdp_db[] =
 };
 
 
+#ifndef BTSTACK_VER
 /*****************************************************************************
  * wiced_bt  buffer pool configuration
  *
@@ -469,6 +506,7 @@ const wiced_bt_cfg_buf_pool_t wiced_app_cfg_buf_pools[] =
     { 1056,     9  },      /* Large Buffer Pool  (used for HCI ACL messages) */
     { 1056,     1   },      /* Extra Large Buffer Pool - Used for avdt media packets and miscellaneous (if not needed, set buf_count to 0) */
 };
+#endif
 
 /*
  * wiced_app_cfg_sdp_record_get_size
@@ -487,6 +525,7 @@ const wiced_bt_cfg_settings_t *wiced_app_cfg_get_settings(void)
 }
 
 
+#ifndef BTSTACK_VER
 /*
  * wiced_app_cfg_buf_pools_get_num
  */
@@ -502,3 +541,4 @@ const wiced_bt_cfg_buf_pool_t *wiced_app_cfg_buf_pools_get(void)
 {
     return wiced_app_cfg_buf_pools;
 }
+#endif

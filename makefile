@@ -1,10 +1,10 @@
 #
-# Copyright 2016-2020, Cypress Semiconductor Corporation or a subsidiary of
-# Cypress Semiconductor Corporation. All Rights Reserved.
+# Copyright 2016-2021, Cypress Semiconductor Corporation (an Infineon company) or
+# an affiliate of Cypress Semiconductor Corporation.  All rights reserved.
 #
 # This software, including source code, documentation and related
-# materials ("Software"), is owned by Cypress Semiconductor Corporation
-# or one of its subsidiaries ("Cypress") and is protected by and subject to
+# materials ("Software") is owned by Cypress Semiconductor Corporation
+# or one of its affiliates ("Cypress") and is protected by and subject to
 # worldwide patent protection (United States and foreign),
 # United States copyright laws and international treaty provisions.
 # Therefore, you may use this Software only as provided in the license
@@ -13,7 +13,7 @@
 # If no EULA applies, Cypress hereby grants you a personal, non-exclusive,
 # non-transferable license to copy, modify, and compile the Software
 # source code solely for use in connection with Cypress's
-# integrated circuit products. Any reproduction, modification, translation,
+# integrated circuit products.  Any reproduction, modification, translation,
 # compilation, or representation of this Software except as specified
 # above is prohibited without the express written permission of Cypress.
 #
@@ -46,7 +46,10 @@ TARGET=CYW920721B2EVK-02
 
 SUPPORTED_TARGETS = \
   CYW920721B2EVK-02 \
-  CYW9M2BASE-43012BT
+  CYW9M2BASE-43012BT \
+  CYW920721M2EVK-01 \
+  CYW920721M2EVK-02 \
+  CYW943012BTEVK-01
 
 #
 # Advanced Configuration
@@ -76,15 +79,12 @@ TRANSPORT?=UART
 FASTPAIR_ENABLE :=1
 AMA_SUPPORT := 0
 AAC_SUPPORT ?= 1
-# SPEAKER option is not applicable for 43012 device
+# SPEAKER option is not applicable for CYW9M2BASE-43012BT kit
 SPEAKER ?= 0
 AUTO_ELNA_SWITCH ?= 0
 ENABLE_DEBUG?=0
 
-ifeq ($(TARGET),CYW9M2BASE-43012BT)
-AAC_SUPPORT := 0
-OTA_FW_UPGRADE := 0
-endif
+-include internal.mk
 
 ifeq ($(SPEAKER),1)
 CY_APP_DEFINES+=-DSPEAKER
@@ -98,10 +98,6 @@ endif
 # standard baselib prebuilt libs
 ifeq ($(AMA_SUPPORT), 1)
 CY_APP_PATCH_LIBS += i2s_aud_record_lib.a
-endif
-
-ifeq ($(AAC_SUPPORT), 1)
-CY_APP_PATCH_LIBS += ia_aaclc_lib.a
 endif
 
 # Chip-specific patch libs
@@ -127,14 +123,6 @@ CY_APP_DEFINES += -DNREC_ENABLE
 CY_APP_DEFINES += -DWICED_APP_LE_INCLUDED=TRUE
 CY_APP_DEFINES += -DBT_HS_SPK_CONTROL_BR_EDR_MAX_CONNECTIONS=1
 CY_APP_DEFINES += -DWICED_BT_TRACE_ENABLE
-
-ifeq ($(AAC_SUPPORT), 1)
-CY_APP_DEFINES += -DWICED_BT_A2DP_SINK_MAX_NUM_CODECS=2
-CY_APP_DEFINES += -DA2DP_SINK_AAC_ENABLED
-CY_APP_DEFINES += -DWICED_A2DP_EXT_CODEC=1
-else
-CY_APP_DEFINES += -DWICED_BT_A2DP_SINK_MAX_NUM_CODECS=1
-endif
 
 # Options for Power Consumption Measurement
 ifeq ($(CYPRESS_LOWPOWER_MODE), 1)
@@ -205,10 +193,24 @@ ifeq ($(TARGET),CYW9M2BASE-43012BT)
 CY_APP_DEFINES += -DBT_HS_SPK_CONTROL_LINK_KEY_COUNT=2*BT_HS_SPK_CONTROL_BR_EDR_MAX_CONNECTIONS
 CY_APP_DEFINES += -DAK_4679_CODEC_ENABLE
 CY_APP_DEFINES += -DPLATFORM_LED_DISABLED
+CY_APP_DEFINES += -DAPP_BUTTON_MAX=1
 COMPONENTS += cyw9bt_audio
 COMPONENTS += codec_ak4679_lib
 OTA_FW_UPGRADE = 0
 AUTO_ELNA_SWITCH = 0
+AAC_SUPPORT := 0
+endif # TARGET
+
+ifeq ($(TARGET),CYW943012BTEVK-01)
+CY_APP_DEFINES += -DBT_HS_SPK_CONTROL_LINK_KEY_COUNT=2*BT_HS_SPK_CONTROL_BR_EDR_MAX_CONNECTIONS
+CY_APP_DEFINES += -DCS47L35_CODEC_ENABLE
+CY_APP_DEFINES += -DPLATFORM_LED_DISABLED
+CY_APP_DEFINES += -DAPP_BUTTON_MAX=3
+COMPONENTS += cyw9bt_audio2
+COMPONENTS += codec_cs47l35_lib
+OTA_FW_UPGRADE = 0
+AUTO_ELNA_SWITCH = 0
+AAC_SUPPORT := 0
 endif # TARGET
 
 ifeq ($(FASTPAIR_ENABLE),1)
@@ -228,6 +230,15 @@ endif
 
 ifeq ($(AUTO_ELNA_SWITCH),1)
 CY_APP_DEFINES += -DAUTO_ELNA_SWITCH
+endif
+
+ifeq ($(AAC_SUPPORT), 1)
+CY_APP_PATCH_LIBS += ia_aaclc_lib.a
+CY_APP_DEFINES += -DWICED_BT_A2DP_SINK_MAX_NUM_CODECS=2
+CY_APP_DEFINES += -DA2DP_SINK_AAC_ENABLED
+CY_APP_DEFINES += -DWICED_A2DP_EXT_CODEC=1
+else
+CY_APP_DEFINES += -DWICED_BT_A2DP_SINK_MAX_NUM_CODECS=1
 endif
 
 CY_APP_DEFINES += -DWICED_BT_HFP_HF_MAX_CONN=BT_HS_SPK_CONTROL_BR_EDR_MAX_CONNECTIONS
@@ -282,7 +293,6 @@ endif
 # tools that can be launched with "make open CY_OPEN_TYPE=<tool>
 CY_BT_APP_TOOLS=BTSpy ClientControl
 
--include internal.mk
 ifeq ($(filter $(TARGET),$(SUPPORTED_TARGETS)),)
 $(error TARGET $(TARGET) not supported for this code example)
 endif

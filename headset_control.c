@@ -1,10 +1,10 @@
 /*
- * Copyright 2016-2020, Cypress Semiconductor Corporation or a subsidiary of
- * Cypress Semiconductor Corporation. All Rights Reserved.
+ * Copyright 2016-2021, Cypress Semiconductor Corporation (an Infineon company) or
+ * an affiliate of Cypress Semiconductor Corporation.  All rights reserved.
  *
  * This software, including source code, documentation and related
- * materials ("Software"), is owned by Cypress Semiconductor Corporation
- * or one of its subsidiaries ("Cypress") and is protected by and subject to
+ * materials ("Software") is owned by Cypress Semiconductor Corporation
+ * or one of its affiliates ("Cypress") and is protected by and subject to
  * worldwide patent protection (United States and foreign),
  * United States copyright laws and international treaty provisions.
  * Therefore, you may use this Software only as provided in the license
@@ -13,7 +13,7 @@
  * If no EULA applies, Cypress hereby grants you a personal, non-exclusive,
  * non-transferable license to copy, modify, and compile the Software
  * source code solely for use in connection with Cypress's
- * integrated circuit products. Any reproduction, modification, translation,
+ * integrated circuit products.  Any reproduction, modification, translation,
  * compilation, or representation of this Software except as specified
  * above is prohibited without the express written permission of Cypress.
  *
@@ -82,7 +82,7 @@
  *  - From the peer side app you should be able to do GATT read/write of the elements listed.
  */
 #include <bt_hs_spk_handsfree.h>
-#include <hal/wiced_hal_puart.h>
+#include <wiced_hal_puart.h>
 #include "headset_control.h"
 #include "headset_control_le.h"
 #include "ofu_spp.h"
@@ -162,10 +162,19 @@ const wiced_transport_cfg_t transport_cfg =
         .mode = WICED_TRANSPORT_UART_HCI_MODE,
         .baud_rate = HCI_UART_DEFAULT_BAUD,
     },
+#ifdef NEW_DYNAMIC_MEMORY_INCLUDED
+    .heap_config =
+    {
+        .data_heap_size = 1024 * 4 + 1500 * 2,
+        .hci_trace_heap_size = 1024 * 2,
+        .debug_trace_heap_size = 1024,
+    },
+#else
     .rx_buff_pool_cfg = {
         .buffer_size = 0,
         .buffer_count = 0,
     },
+#endif
 #ifdef AUDIO_INSERT_ENABLED
     .p_status_handler = headset_control_transport_status,
     .p_data_handler = headset_control_proc_rx_cmd,
@@ -205,6 +214,11 @@ static headset_control_local_irk_info_t local_irk_info = {0};
 
 #ifdef AUDIO_INSERT_ENABLED
 static bt_hs_spk_audio_insert_config_t app_audio_insert_config = {0};
+#endif
+
+#if BTSTACK_VER >= 0x01020000
+#define BT_STACK_HEAP_SIZE          1024 * 6
+wiced_bt_heap_t *p_default_heap = NULL;
 #endif
 
 /******************************************************
@@ -303,12 +317,29 @@ void btheadset_control_init( void )
     WICED_BT_TRACE( "#########################\n" );
     WICED_BT_TRACE( "# headset_speaker APP START #\n" );
     WICED_BT_TRACE( "#########################\n" );
+
+#if BTSTACK_VER >= 0x01020000
+    /* Create default heap */
+    p_default_heap = wiced_bt_create_heap("default_heap", NULL, BT_STACK_HEAP_SIZE, NULL,
+            WICED_TRUE);
+    if (p_default_heap == NULL)
+    {
+        WICED_BT_TRACE("create default heap error: size %d\n", BT_STACK_HEAP_SIZE);
+        return;
+    }
+#endif
+
+#if BTSTACK_VER >= 0x01020000
+    ret = wiced_bt_stack_init(btheadset_control_management_callback, &wiced_bt_cfg_settings);
+#else
     ret = wiced_bt_stack_init(btheadset_control_management_callback, &wiced_bt_cfg_settings, wiced_app_cfg_buf_pools);
+#endif
     if( ret != WICED_BT_SUCCESS )
     {
         WICED_BT_TRACE("wiced_bt_stack_init returns error: %d\n", ret);
         return;
     }
+    WICED_BT_TRACE ("Device Class: 0x%02x%02x%02x\n",wiced_bt_cfg_settings.device_class[0],wiced_bt_cfg_settings.device_class[1],wiced_bt_cfg_settings.device_class[2]);
 
     /* Configure Audio buffer */
     ret = wiced_audio_buffer_initialize (wiced_bt_audio_buf_config);
@@ -386,7 +417,7 @@ wiced_result_t btheadset_post_bt_init(void)
                                               WICED_BT_HFP_HF_FEATURE_ESCO_S4_T2_SETTINGS_SUPPORT;
 #endif
 
-#if !defined(CYW43012C0)
+#if !(defined(CYW43012C0) || defined(CYW55572A0))
     config.sleep_config.enable                  = WICED_TRUE;
     config.sleep_config.sleep_mode              = WICED_SLEEP_MODE_NO_TRANSPORT;
     config.sleep_config.host_wake_mode          = WICED_SLEEP_WAKE_ACTIVE_HIGH;
@@ -407,8 +438,10 @@ wiced_result_t btheadset_post_bt_init(void)
     /*Set audio sink*/
 #ifdef SPEAKER
     bt_hs_spk_set_audio_sink(AM_SPEAKERS);
+    WICED_BT_TRACE("Default Application: Speaker\n");
 #else
     bt_hs_spk_set_audio_sink(AM_HEADPHONES);
+    WICED_BT_TRACE("Default Application: Headset\n");
 #endif
 
 #if (WICED_APP_LE_INCLUDED == TRUE)
@@ -732,7 +765,9 @@ static uint32_t headset_control_proc_rx_cmd( uint8_t *p_buffer, uint32_t length 
     if(( length < 4 ) || (p_data == NULL))
     {
         WICED_BT_TRACE("invalid params\n");
+#ifndef NEW_DYNAMIC_MEMORY_INCLUDED
         wiced_transport_free_buffer( p_buffer );
+#endif
         return HCI_CONTROL_STATUS_INVALID_ARGS;
     }
 
@@ -767,6 +802,7 @@ static uint32_t headset_control_proc_rx_cmd( uint8_t *p_buffer, uint32_t length 
 
             WICED_BT_TRACE("Start audio_insert duration:%d\n", param8);
             status = bt_hs_spk_audio_insert_start(&app_audio_insert_config);
+            WICED_BT_TRACE("AUDIO_INSERT_STARTED duration:%d sample_rate:%d\n",param8,app_audio_insert_config.sample_rate);
         }
         if (status == WICED_BT_SUCCESS)
             wiced_hci_status = 0;
@@ -785,8 +821,10 @@ static uint32_t headset_control_proc_rx_cmd( uint8_t *p_buffer, uint32_t length 
         break;
     }
 
+#ifndef NEW_DYNAMIC_MEMORY_INCLUDED
     // Freeing the buffer in which data is received
     wiced_transport_free_buffer( p_buffer );
+#endif
 
     return HCI_CONTROL_STATUS_SUCCESS;
 }
@@ -799,5 +837,8 @@ static void headset_control_transport_status( wiced_transport_type_t type )
 {
     WICED_BT_TRACE( " hci_control_transport_status %x \n", type );
     wiced_transport_send_data( HCI_CONTROL_EVENT_DEVICE_STARTED, NULL, 0 );
+#ifdef SWITCH_PTU_CHECK
+    platform_transport_started = 1;
+#endif
 }
 #endif
