@@ -163,6 +163,15 @@ static bt_hs_spk_button_action_t app_button_action[] =
         .event  = BUTTON_LONG_DURATION_EVENT,
         .state  = BUTTON_STATE_RELEASED,
     },
+#ifdef ENABLE_PTS_TESTING
+    {
+        .action = ACTION_MULTI_FUNCTION_LONG_RELEASE,
+        .button = VOLUME_DOWN_PREVIOUS_TRACK_BUTTON,
+        .event  = BUTTON_HOLDING_EVENT,
+        .state  = BUTTON_STATE_HELD,
+        .repeat = 1,
+    },
+#endif
 #if (APP_BUTTON_MAX < 4)
     {
         .action = ACTION_TRANSPORT_DETECT_ON,

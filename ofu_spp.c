@@ -36,6 +36,9 @@
 #include <spp_ota_fw_upgrade.h>
 #endif
 #include "wiced_app_cfg.h"
+#if BTSTACK_VER >= 0x01020000
+#include <bt_types.h>       /* BD_ADDR for wiced_bt_spp.h */
+#endif
 #include <wiced_bt_spp.h>
 
 

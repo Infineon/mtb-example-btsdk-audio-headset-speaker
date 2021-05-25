@@ -88,7 +88,9 @@
 #include "ofu_spp.h"
 #include "wiced_bt_gatt.h"
 #include "wiced_bt_ble.h"
+#ifdef OTA_FW_UPGRADE
 #include <wiced_bt_ota_firmware_upgrade.h>
+#endif
 #include <wiced_bt_stack.h>
 #include "wiced_app_cfg.h"
 #include "wiced_memory.h"
@@ -100,6 +102,9 @@
 #include "wiced_transport.h"
 #include "wiced_app.h"
 #include "wiced_bt_a2dp_sink.h"
+#if BTSTACK_VER > 0x01020000
+#include "wiced_audio_sink_route_config.h"
+#endif
 #include "platform_led.h"
 #include "wiced_led_manager.h"
 #include "bt_hs_spk_button.h"
@@ -234,7 +239,7 @@ static void headset_control_local_irk_restore(void)
 
     nb_bytes = wiced_hal_read_nvram(HEADSET_NVRAM_ID_LOCAL_IRK,
                                     BTM_SECURITY_LOCAL_KEY_DATA_LEN,
-                                    local_irk_info.local_irk.local_key_data,
+                                    (uint8_t *)&local_irk_info.local_irk,
                                     &local_irk_info.result);
 
     WICED_BT_TRACE("headset_control_local_irk_restore (result: %d, nb_bytes: %d)\n",
@@ -252,7 +257,7 @@ static void headset_control_local_irk_update(uint8_t *p_key)
 
     /* Check if the IRK shall be updated. */
     if (memcmp((void *) p_key,
-               (void *) local_irk_info.local_irk.local_key_data,
+               (void *) &local_irk_info.local_irk,
                BTM_SECURITY_LOCAL_KEY_DATA_LEN) != 0)
     {
         nb_bytes = wiced_hal_write_nvram(HEADSET_NVRAM_ID_LOCAL_IRK,
@@ -267,7 +272,7 @@ static void headset_control_local_irk_update(uint8_t *p_key)
         if ((nb_bytes == BTM_SECURITY_LOCAL_KEY_DATA_LEN) &&
             (result == WICED_BT_SUCCESS))
         {
-            memcpy((void *) local_irk_info.local_irk.local_key_data,
+            memcpy((void *) &local_irk_info.local_irk,
                    (void *) p_key,
                    BTM_SECURITY_LOCAL_KEY_DATA_LEN);
 
@@ -298,9 +303,13 @@ void btheadset_control_init( void )
     wiced_set_debug_uart(WICED_ROUTE_DEBUG_TO_WICED_UART);
 #endif // CYW43012C0
 #else // NO_PUART_SUPPORT
+#ifdef CYW55572
+    // wiced_platform_init already handled it
+#else
     // Set to PUART to see traces on peripheral uart(puart)
     wiced_hal_puart_init();
     wiced_hal_puart_configuration(3000000, PARITY_NONE,STOP_BIT_2);
+#endif
     wiced_set_debug_uart( WICED_ROUTE_DEBUG_TO_PUART );
 #endif // NO_PUART_SUPPORT
 
@@ -339,7 +348,14 @@ void btheadset_control_init( void )
         WICED_BT_TRACE("wiced_bt_stack_init returns error: %d\n", ret);
         return;
     }
+#if BTSTACK_VER > 0x01020000
+    WICED_BT_TRACE ("Device Class: 0x%02x%02x%02x\n",
+            wiced_bt_cfg_settings.p_br_cfg->device_class[0],
+            wiced_bt_cfg_settings.p_br_cfg->device_class[1],
+            wiced_bt_cfg_settings.p_br_cfg->device_class[2]);
+#else
     WICED_BT_TRACE ("Device Class: 0x%02x%02x%02x\n",wiced_bt_cfg_settings.device_class[0],wiced_bt_cfg_settings.device_class[1],wiced_bt_cfg_settings.device_class[2]);
+#endif
 
     /* Configure Audio buffer */
     ret = wiced_audio_buffer_initialize (wiced_bt_audio_buf_config);
@@ -407,17 +423,17 @@ wiced_result_t btheadset_post_bt_init(void)
                                               WICED_BT_HFP_HF_FEATURE_HF_INDICATORS | \
                                               WICED_BT_HFP_HF_FEATURE_CODEC_NEGOTIATION | \
                                               WICED_BT_HFP_HF_FEATURE_VOICE_RECOGNITION_ACTIVATION | \
-                                              WICED_BT_HFP_HF_FEATURE_ESCO_S4_T2_SETTINGS_SUPPORT;
+                                              WICED_BT_HFP_HF_FEATURE_ESCO_S4_SETTINGS_SUPPORT;
 #else
     config.hfp.feature_mask                 = WICED_BT_HFP_HF_FEATURE_3WAY_CALLING | \
                                               WICED_BT_HFP_HF_FEATURE_CLIP_CAPABILITY | \
                                               WICED_BT_HFP_HF_FEATURE_REMOTE_VOLUME_CONTROL| \
                                               WICED_BT_HFP_HF_FEATURE_HF_INDICATORS | \
                                               WICED_BT_HFP_HF_FEATURE_VOICE_RECOGNITION_ACTIVATION | \
-                                              WICED_BT_HFP_HF_FEATURE_ESCO_S4_T2_SETTINGS_SUPPORT;
+                                              WICED_BT_HFP_HF_FEATURE_ESCO_S4_SETTINGS_SUPPORT;
 #endif
 
-#if !(defined(CYW43012C0) || defined(CYW55572A0))
+#if !(defined(CYW43012C0) || defined(CYW55572))
     config.sleep_config.enable                  = WICED_TRUE;
     config.sleep_config.sleep_mode              = WICED_SLEEP_MODE_NO_TRANSPORT;
     config.sleep_config.host_wake_mode          = WICED_SLEEP_WAKE_ACTIVE_HIGH;
@@ -659,7 +675,7 @@ wiced_result_t btheadset_control_management_callback( wiced_bt_management_evt_t 
         case BTM_LOCAL_IDENTITY_KEYS_UPDATE_EVT:
             WICED_BT_TRACE("BTM_LOCAL_IDENTITY_KEYS_UPDATE_EVT\n");
 
-            headset_control_local_irk_update(p_event_data->local_identity_keys_update.local_key_data);
+            headset_control_local_irk_update((uint8_t *)&p_event_data->local_identity_keys_update);
             break;
 
 
@@ -672,8 +688,8 @@ wiced_result_t btheadset_control_management_callback( wiced_bt_management_evt_t 
 
             if (local_irk_info.result == WICED_BT_SUCCESS)
             {
-                memcpy((void *) p_event_data->local_identity_keys_request.local_key_data,
-                       (void *) local_irk_info.local_irk.local_key_data,
+                memcpy((void *) &p_event_data->local_identity_keys_request,
+                       (void *) &local_irk_info.local_irk,
                        BTM_SECURITY_LOCAL_KEY_DATA_LEN);
             }
             else

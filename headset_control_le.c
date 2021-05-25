@@ -44,7 +44,9 @@
 #include "wiced_bt_gatt.h"
 #include "wiced_bt_gatt.h"
 #include "wiced_bt_ble.h"
+#ifdef OTA_FW_UPGRADE
 #include <wiced_bt_ota_firmware_upgrade.h>
+#endif
 #include "wiced_bt_trace.h"
 #include "wiced_bt_cfg.h"
 #include "wiced_timer.h"
@@ -74,7 +76,7 @@
 
 #ifdef FASTPAIR_ENABLE
 /* MODEL-specific definitions */
-#if defined(CYW20721B2) || defined(CYW43012C0)
+#if defined(CYW20721B2) || defined(CYW43012C0) || BTSTACK_VER >= 0x01020000
 #define FASTPAIR_MODEL_ID                   0x82DA6E
 #else
 #define FASTPAIR_MODEL_ID                   0xCE948F //0xB49236 //0x000107 //0x140A02 // 0xCE948F
@@ -140,33 +142,33 @@ const uint8_t gatt_server_db[]=
 
         /* Declare mandatory GAP service characteristic: Dev Name */
         CHARACTERISTIC_UUID16( HANDLE_HSENS_GAP_SERVICE_CHAR_DEV_NAME, HANDLE_HSENS_GAP_SERVICE_CHAR_DEV_NAME_VAL,
-                GATT_UUID_GAP_DEVICE_NAME, LEGATTDB_CHAR_PROP_READ, LEGATTDB_PERM_READABLE ),
+                GATT_UUID_GAP_DEVICE_NAME, GATTDB_CHAR_PROP_READ, GATTDB_PERM_READABLE ),
 
         /* Declare mandatory GAP service characteristic: Appearance */
         CHARACTERISTIC_UUID16( HANDLE_HSENS_GAP_SERVICE_CHAR_DEV_APPEARANCE, HANDLE_HSENS_GAP_SERVICE_CHAR_DEV_APPEARANCE_VAL,
-                GATT_UUID_GAP_ICON, LEGATTDB_CHAR_PROP_READ, LEGATTDB_PERM_READABLE ),
+                GATT_UUID_GAP_ICON, GATTDB_CHAR_PROP_READ, GATTDB_PERM_READABLE ),
 
     /* Declare Device info service */
     PRIMARY_SERVICE_UUID16( HANDLE_HSENS_DEV_INFO_SERVICE, UUID_SERVCLASS_DEVICE_INFO ),
 
         /* Handle 0x4e: characteristic Manufacturer Name, handle 0x4f characteristic value */
         CHARACTERISTIC_UUID16( HANDLE_HSENS_DEV_INFO_SERVICE_CHAR_MFR_NAME, HANDLE_HSENS_DEV_INFO_SERVICE_CHAR_MFR_NAME_VAL,
-                GATT_UUID_MANU_NAME, LEGATTDB_CHAR_PROP_READ, LEGATTDB_PERM_READABLE ),
+                GATT_UUID_MANU_NAME, GATTDB_CHAR_PROP_READ, GATTDB_PERM_READABLE ),
 
         /* Handle 0x50: characteristic Model Number, handle 0x51 characteristic value */
         CHARACTERISTIC_UUID16( HANDLE_HSENS_DEV_INFO_SERVICE_CHAR_MODEL_NUM, HANDLE_HSENS_DEV_INFO_SERVICE_CHAR_MODEL_NUM_VAL,
-                GATT_UUID_MODEL_NUMBER_STR, LEGATTDB_CHAR_PROP_READ, LEGATTDB_PERM_READABLE ),
+                GATT_UUID_MODEL_NUMBER_STR, GATTDB_CHAR_PROP_READ, GATTDB_PERM_READABLE ),
 
         /* Handle 0x52: characteristic System ID, handle 0x53 characteristic value */
         CHARACTERISTIC_UUID16( HANDLE_HSENS_DEV_INFO_SERVICE_CHAR_SYSTEM_ID, HANDLE_HSENS_DEV_INFO_SERVICE_CHAR_SYSTEM_ID_VAL,
-                GATT_UUID_SYSTEM_ID, LEGATTDB_CHAR_PROP_READ, LEGATTDB_PERM_READABLE ),
+                GATT_UUID_SYSTEM_ID, GATTDB_CHAR_PROP_READ, GATTDB_PERM_READABLE ),
 
     /* Declare Battery service */
     PRIMARY_SERVICE_UUID16( HANDLE_HSENS_BATTERY_SERVICE, UUID_SERVCLASS_BATTERY ),
 
         /* Handle 0x62: characteristic Battery Level, handle 0x63 characteristic value */
         CHARACTERISTIC_UUID16( HANDLE_HSENS_BATTERY_SERVICE_CHAR_LEVEL, HANDLE_HSENS_BATTERY_SERVICE_CHAR_LEVEL_VAL,
-                GATT_UUID_BATTERY_LEVEL, LEGATTDB_CHAR_PROP_READ, LEGATTDB_PERM_READABLE),
+                GATT_UUID_BATTERY_LEVEL, GATTDB_CHAR_PROP_READ, GATTDB_PERM_READABLE),
 
 #ifdef FASTPAIR_ENABLE
     // Declare Fast Pair service
@@ -175,34 +177,35 @@ const uint8_t gatt_server_db[]=
     CHARACTERISTIC_UUID16_WRITABLE (HANDLE_FASTPAIR_SERVICE_CHAR_KEY_PAIRING,
                                     HANDLE_FASTPAIR_SERVICE_CHAR_KEY_PAIRING_VAL,
                                     WICED_BT_GFPS_UUID_CHARACTERISTIC_KEY_PAIRING,
-                                    LEGATTDB_CHAR_PROP_WRITE | LEGATTDB_CHAR_PROP_NOTIFY,
-                                    LEGATTDB_PERM_READABLE | LEGATTDB_PERM_WRITE_REQ),
+                                    GATTDB_CHAR_PROP_WRITE | GATTDB_CHAR_PROP_NOTIFY,
+                                    GATTDB_PERM_READABLE | GATTDB_PERM_WRITE_REQ),
 
     CHAR_DESCRIPTOR_UUID16_WRITABLE(HANDLE_FASTPAIR_SERVICE_CHAR_KEY_PAIRING_CFG_DESC,
                                     UUID_DESCRIPTOR_CLIENT_CHARACTERISTIC_CONFIGURATION,
-                                    LEGATTDB_PERM_AUTH_READABLE | LEGATTDB_PERM_WRITE_REQ),
+                                    GATTDB_PERM_AUTH_READABLE | GATTDB_PERM_WRITE_REQ),
 
     CHARACTERISTIC_UUID16_WRITABLE (HANDLE_FASTPAIR_SERVICE_CHAR_PASSKEY,
                                     HANDLE_FASTPAIR_SERVICE_CHAR_PASSKEY_VAL,
                                     WICED_BT_GFPS_UUID_CHARACTERISTIC_PASSKEY,
-                                    LEGATTDB_CHAR_PROP_WRITE | LEGATTDB_CHAR_PROP_NOTIFY,
-                                    LEGATTDB_PERM_READABLE | LEGATTDB_PERM_WRITE_REQ),
+                                    GATTDB_CHAR_PROP_WRITE | GATTDB_CHAR_PROP_NOTIFY,
+                                    GATTDB_PERM_READABLE | GATTDB_PERM_WRITE_REQ),
 
     CHAR_DESCRIPTOR_UUID16_WRITABLE(HANDLE_FASTPAIR_SERVICE_CHAR_PASSKEY_CFG_DESC,
                                     UUID_DESCRIPTOR_CLIENT_CHARACTERISTIC_CONFIGURATION,
-                                    LEGATTDB_PERM_AUTH_READABLE | LEGATTDB_PERM_WRITE_REQ),
+                                    GATTDB_PERM_AUTH_READABLE | GATTDB_PERM_WRITE_REQ),
 
     CHARACTERISTIC_UUID16_WRITABLE (HANDLE_FASTPAIR_SERVICE_CHAR_ACCOUNT_KEY,
                                     HANDLE_FASTPAIR_SERVICE_CHAR_ACCOUNT_KEY_VAL,
                                     WICED_BT_GFPS_UUID_CHARACTERISTIC_ACCOUNT_KEY,
-                                    LEGATTDB_CHAR_PROP_WRITE,
-                                    LEGATTDB_PERM_READABLE | LEGATTDB_PERM_WRITE_REQ),
+                                    GATTDB_CHAR_PROP_WRITE,
+                                    GATTDB_PERM_READABLE | GATTDB_PERM_WRITE_REQ),
 
     CHAR_DESCRIPTOR_UUID16_WRITABLE(HANDLE_FASTPAIR_SERVICE_CHAR_ACCOUNT_KEY_CFG_DESC,
                                     UUID_DESCRIPTOR_CLIENT_CHARACTERISTIC_CONFIGURATION,
-                                    LEGATTDB_PERM_AUTH_READABLE | LEGATTDB_PERM_WRITE_REQ),
+                                    GATTDB_PERM_AUTH_READABLE | LEGATTDB_PERM_WRITE_REQ),
 #endif
 
+#ifdef OTA_FW_UPGRADE
     /* WICED Upgrade Service. */
 #ifdef OTA_SECURE_FIRMWARE_UPGRADE
     PRIMARY_SERVICE_UUID128(HANDLE_OTA_FW_UPGRADE_SERVICE, UUID_OTA_SEC_FW_UPGRADE_SERVICE),
@@ -211,18 +214,18 @@ const uint8_t gatt_server_db[]=
 #endif
         /* characteristic Control Point */
         CHARACTERISTIC_UUID128_WRITABLE(HANDLE_OTA_FW_UPGRADE_CHARACTERISTIC_CONTROL_POINT, HANDLE_OTA_FW_UPGRADE_CONTROL_POINT,
-            UUID_OTA_FW_UPGRADE_CHARACTERISTIC_CONTROL_POINT, LEGATTDB_CHAR_PROP_WRITE | LEGATTDB_CHAR_PROP_NOTIFY | LEGATTDB_CHAR_PROP_INDICATE,
-            LEGATTDB_PERM_VARIABLE_LENGTH | LEGATTDB_PERM_WRITE_REQ),
+            UUID_OTA_FW_UPGRADE_CHARACTERISTIC_CONTROL_POINT, GATTDB_CHAR_PROP_WRITE | LEGATTDB_CHAR_PROP_NOTIFY | GATTDB_CHAR_PROP_INDICATE,
+            GATTDB_PERM_VARIABLE_LENGTH | GATTDB_PERM_WRITE_REQ),
 
         /* client characteristic configuration descriptor */
         CHAR_DESCRIPTOR_UUID16_WRITABLE(HANDLE_OTA_FW_UPGRADE_CLIENT_CONFIGURATION_DESCRIPTOR, UUID_DESCRIPTOR_CLIENT_CHARACTERISTIC_CONFIGURATION,
-            LEGATTDB_PERM_READABLE | LEGATTDB_PERM_WRITE_REQ),
+            GATTDB_PERM_READABLE | GATTDB_PERM_WRITE_REQ),
 
         /* characteristic Data. */
         CHARACTERISTIC_UUID128_WRITABLE(HANDLE_OTA_FW_UPGRADE_CHARACTERISTIC_DATA, HANDLE_OTA_FW_UPGRADE_DATA,
-            UUID_OTA_FW_UPGRADE_CHARACTERISTIC_DATA, LEGATTDB_CHAR_PROP_WRITE,
-            LEGATTDB_PERM_VARIABLE_LENGTH | LEGATTDB_PERM_WRITE_REQ | LEGATTDB_PERM_RELIABLE_WRITE),
-
+            UUID_OTA_FW_UPGRADE_CHARACTERISTIC_DATA, GATTDB_CHAR_PROP_WRITE,
+            GATTDB_PERM_VARIABLE_LENGTH | GATTDB_PERM_WRITE_REQ | LEGATTDB_PERM_RELIABLE_WRITE),
+#endif /* OTA_FW_UPGRADE */
 
 
 };
@@ -265,8 +268,6 @@ wiced_bt_db_hash_t headset_db_hash;
 static wiced_bt_gatt_status_t hci_control_le_gatt_callback( wiced_bt_gatt_evt_t event, wiced_bt_gatt_event_data_t *p_data );
 static wiced_result_t         hci_control_le_connection_up( wiced_bt_gatt_connection_status_t *p_status );
 static wiced_result_t         hci_control_le_connection_down( wiced_bt_gatt_connection_status_t *p_status );
-static wiced_result_t         hci_control_le_write_handler( uint16_t conn_id, wiced_bt_gatt_write_t * p_data );
-
 
 static void headset_control_le_discoverabilty_change_callback(wiced_bool_t discoverable)
 {
@@ -449,6 +450,275 @@ attribute_t * hci_control_get_attribute( uint16_t handle )
     return NULL;
 }
 
+#if BTSTACK_VER > 0x01020000
+/*
+ * Process Read request from peer device
+ */
+wiced_bt_gatt_status_t hci_control_le_read_handler(uint16_t conn_id,
+        wiced_bt_gatt_opcode_t opcode,
+        wiced_bt_gatt_read_t *p_read_req,
+        uint16_t len_requested)
+{
+    attribute_t *puAttribute;
+    int          attr_len_to_copy;
+    uint8_t     *from;
+    int          to_send;
+
+#ifdef OTA_FW_UPGRADE
+    if (wiced_ota_fw_upgrade_is_gatt_handle(p_req->handle))
+    {
+        return wiced_ota_fw_upgrade_read_handler(conn_id,
+                opcode,
+                p_read_req,
+                len_requested);
+    }
+#endif
+
+    if ((puAttribute = hci_control_get_attribute(p_read_req->handle)) == NULL)
+    {
+        WICED_BT_TRACE("[%s] read_hndlr attr not found hdl:%x\n", __FUNCTION__,
+                p_read_req->handle );
+        wiced_bt_gatt_server_send_error_rsp(conn_id, opcode, p_read_req->handle,
+                WICED_BT_GATT_INVALID_HANDLE);
+        return WICED_BT_GATT_INVALID_HANDLE;
+    }
+
+    /* Dummy battery value read increment */
+    if (p_read_req->handle == HANDLE_HSENS_BATTERY_SERVICE_CHAR_LEVEL_VAL)
+    {
+        if (btheadset_battery_level++ > 5)
+        {
+            btheadset_battery_level = 0;
+        }
+    }
+
+    attr_len_to_copy = puAttribute->attr_len;
+
+    WICED_BT_TRACE("[%s] read_hndlr conn_id:%d hdl:%x offset:%d len:%d\n",
+            __FUNCTION__, conn_id, p_read_req->handle, p_read_req->offset,
+            attr_len_to_copy );
+
+    if (p_read_req->offset >= puAttribute->attr_len )
+    {
+        WICED_BT_TRACE("[%s] offset:%d larger than attribute length:%d\n",
+                __FUNCTION__, p_read_req->offset, puAttribute->attr_len);
+        wiced_bt_gatt_server_send_error_rsp(conn_id, opcode, p_read_req->handle,
+                WICED_BT_GATT_INVALID_OFFSET);
+        return WICED_BT_GATT_INVALID_OFFSET;
+    }
+
+    to_send = MIN(len_requested, attr_len_to_copy - p_read_req->offset);
+
+    from = ((uint8_t *)puAttribute->p_attr) + p_read_req->offset;
+
+    wiced_bt_gatt_server_send_read_handle_rsp(conn_id, opcode, to_send, from, NULL);
+
+    return WICED_BT_GATT_SUCCESS;
+}
+
+/*
+ * Process Read by type request from peer device
+ */
+wiced_bt_gatt_status_t hci_control_le_read_by_type_handler(uint16_t conn_id,
+        wiced_bt_gatt_opcode_t opcode,
+        wiced_bt_gatt_read_by_type_t *p_read_req,
+        uint16_t len_requested)
+{
+    attribute_t *puAttribute;
+    uint16_t    attr_handle = p_read_req->s_handle;
+    uint8_t     *p_rsp = wiced_bt_get_buffer(len_requested);
+    uint16_t    rsp_len = 0;
+    uint8_t    pair_len = 0;
+    int used = 0;
+
+    if (p_rsp == NULL)
+    {
+        WICED_BT_TRACE("[%s] no memory len_requested: %d!!\n", __FUNCTION__,
+                len_requested);
+        wiced_bt_gatt_server_send_error_rsp(conn_id, opcode, attr_handle,
+                WICED_BT_GATT_INSUF_RESOURCE);
+        return WICED_BT_GATT_INSUF_RESOURCE;
+    }
+
+    /* Read by type returns all attributes of the specified type, between the start and end handles */
+    while (WICED_TRUE)
+    {
+        /// Add your code here
+        attr_handle = wiced_bt_gatt_find_handle_by_type(attr_handle,
+                p_read_req->e_handle, &p_read_req->uuid);
+
+        if (attr_handle == 0)
+            break;
+
+        if ((puAttribute = hci_control_get_attribute(attr_handle)) == NULL)
+        {
+            WICED_BT_TRACE("[%s] found type but no attribute ??\n", __FUNCTION__);
+            wiced_bt_gatt_server_send_error_rsp(conn_id, opcode,
+                    p_read_req->s_handle, WICED_BT_GATT_ERR_UNLIKELY);
+            wiced_bt_free_buffer(p_rsp);
+            return WICED_BT_GATT_ERR_UNLIKELY;
+        }
+        // --------
+
+        {
+            int filled = wiced_bt_gatt_put_read_by_type_rsp_in_stream(
+                    p_rsp + used,
+                    len_requested - used,
+                    &pair_len,
+                    attr_handle,
+                    puAttribute->attr_len,
+                    puAttribute->p_attr);
+            if (filled == 0) {
+                break;
+            }
+            used += filled;
+        }
+
+        /* Increment starting handle for next search to one past current */
+        attr_handle++;
+    }
+
+    if (used == 0)
+    {
+        WICED_BT_TRACE("[%s] attr not found 0x%04x -  0x%04x Type: 0x%04x\n",
+                __FUNCTION__, p_read_req->s_handle, p_read_req->e_handle,
+                p_read_req->uuid.uu.uuid16);
+
+        wiced_bt_gatt_server_send_error_rsp(conn_id, opcode, p_read_req->s_handle,
+                WICED_BT_GATT_INVALID_HANDLE);
+        wiced_bt_free_buffer(p_rsp);
+        return WICED_BT_GATT_INVALID_HANDLE;
+    }
+
+    /* Send the response */
+    wiced_bt_gatt_server_send_read_by_type_rsp(conn_id, opcode, pair_len,
+            used, p_rsp, (wiced_bt_gatt_app_context_t)wiced_bt_free_buffer);
+
+    return WICED_BT_GATT_SUCCESS;
+}
+
+/*
+ * Process read multi request from peer device
+ */
+wiced_bt_gatt_status_t hci_control_le_read_multi_handler(uint16_t conn_id,
+        wiced_bt_gatt_opcode_t opcode,
+        wiced_bt_gatt_read_multiple_req_t *p_read_req,
+        uint16_t len_requested)
+{
+    attribute_t *puAttribute;
+    uint8_t     *p_rsp = wiced_bt_get_buffer(len_requested);
+    int         used = 0;
+    int         xx;
+    uint16_t    handle;
+
+    handle = wiced_bt_gatt_get_handle_from_stream(p_read_req->p_handle_stream, 0);
+
+    if (p_rsp == NULL)
+    {
+        WICED_BT_TRACE ("[%s] no memory len_requested: %d!!\n", __FUNCTION__,
+                len_requested);
+
+        wiced_bt_gatt_server_send_error_rsp(conn_id, opcode, handle,
+                WICED_BT_GATT_INSUF_RESOURCE);
+        return WICED_BT_GATT_INSUF_RESOURCE;
+    }
+
+    /* Read by type returns all attributes of the specified type, between the start and end handles */
+    for (xx = 0; xx < p_read_req->num_handles; xx++)
+    {
+        handle = wiced_bt_gatt_get_handle_from_stream(p_read_req->p_handle_stream,
+                xx);
+        if ((puAttribute = hci_control_get_attribute(handle)) == NULL)
+        {
+            WICED_BT_TRACE ("[%s] no handle 0x%04xn", __FUNCTION__, handle);
+            wiced_bt_gatt_server_send_error_rsp(conn_id, opcode,
+                    *p_read_req->p_handle_stream, WICED_BT_GATT_ERR_UNLIKELY);
+            wiced_bt_free_buffer(p_rsp);
+            return WICED_BT_GATT_ERR_UNLIKELY;
+        }
+
+        {
+            int filled = wiced_bt_gatt_put_read_multi_rsp_in_stream(opcode,
+                    p_rsp + used,
+                    len_requested - used,
+                    puAttribute->handle,
+                    puAttribute->attr_len,
+                    puAttribute->p_attr);
+
+            if (!filled) {
+                break;
+            }
+            used += filled;
+        }
+    }
+
+    if (used == 0)
+    {
+        WICED_BT_TRACE ("[%s] no attr found\n", __FUNCTION__);
+
+        wiced_bt_gatt_server_send_error_rsp(conn_id, opcode,
+                *p_read_req->p_handle_stream, WICED_BT_GATT_INVALID_HANDLE);
+        wiced_bt_free_buffer(p_rsp);
+        return WICED_BT_GATT_INVALID_HANDLE;
+    }
+
+    /* Send the response */
+    wiced_bt_gatt_server_send_read_multiple_rsp(conn_id, opcode, used, p_rsp,
+            (wiced_bt_gatt_app_context_t)wiced_bt_free_buffer);
+
+    return WICED_BT_GATT_SUCCESS;
+}
+
+/*
+ * Process write request or write command from peer device
+ */
+wiced_bt_gatt_status_t hci_control_le_write_handler(uint16_t conn_id,
+        wiced_bt_gatt_opcode_t opcode,
+        wiced_bt_gatt_write_req_t* p_data)
+{
+#ifdef OTA_FW_UPGRADE
+    if (wiced_ota_fw_upgrade_is_gatt_handle(p_req->handle))
+    {
+        return wiced_ota_fw_upgrade_write_handler(conn_id, opcode, p_data);
+    }
+#endif
+
+    WICED_BT_TRACE("[%s] conn_id:%d handle:%04x\n", __FUNCTION__, conn_id,
+            p_data->handle);
+
+    return WICED_BT_GATT_SUCCESS;
+}
+
+/*
+ * Process MTU request from the peer
+ */
+wiced_bt_gatt_status_t hci_control_le_mtu_handler( uint16_t conn_id, uint16_t mtu)
+{
+    WICED_BT_TRACE("req_mtu: %d\n", mtu);
+    wiced_bt_gatt_server_send_mtu_rsp(conn_id, mtu,
+            wiced_bt_cfg_settings.p_ble_cfg->ble_max_rx_pdu_size);
+    return WICED_BT_GATT_SUCCESS;
+}
+
+/*
+ * Process indication confirm.
+ */
+wiced_bt_gatt_status_t hci_control_le_conf_handler(uint16_t conn_id,
+        uint16_t handle)
+{
+#ifdef OTA_FW_UPGRADE
+    if (wiced_ota_fw_upgrade_is_gatt_handle(handle))
+    {
+        return wiced_ota_fw_upgrade_indication_cfm_handler(conn_id, handle);
+    }
+#endif
+
+    WICED_BT_TRACE("[%s] conn_id:%d handle:%x\n", __FUNCTION__, conn_id, handle);
+
+    return WICED_BT_GATT_SUCCESS;
+}
+
+#else /* !BTSTACK_VER */
 /*
  * Process Read request or command from peer device
  */
@@ -559,6 +829,7 @@ wiced_result_t  hci_control_le_conf_handler( uint16_t conn_id, uint16_t handle )
 
     return WICED_SUCCESS;
 }
+#endif /* BTSTACK_VER */
 
 /*
  * This is a GATT request callback
@@ -567,6 +838,72 @@ wiced_bt_gatt_status_t hci_control_le_gatt_req_cb( wiced_bt_gatt_attribute_reque
 {
     wiced_bt_gatt_status_t result  = WICED_BT_GATT_SUCCESS;
 
+#if BTSTACK_VER > 0x01020000
+    switch (p_req->opcode)
+    {
+        case GATT_REQ_READ:
+        case GATT_REQ_READ_BLOB:
+            result = hci_control_le_read_handler(p_req->conn_id,
+                    p_req->opcode,
+                    &p_req->data.read_req,
+                    p_req->len_requested);
+            break;
+
+        case GATT_REQ_READ_BY_TYPE:
+            result = hci_control_le_read_by_type_handler(p_req->conn_id,
+                    p_req->opcode,
+                    &p_req->data.read_by_type,
+                    p_req->len_requested);
+            break;
+
+        case GATT_REQ_READ_MULTI:
+        case GATT_REQ_READ_MULTI_VAR_LENGTH:
+            result = hci_control_le_read_multi_handler(p_req->conn_id,
+                    p_req->opcode,
+                    &p_req->data.read_multiple_req,
+                    p_req->len_requested);
+            break;
+
+        case GATT_REQ_WRITE:
+        case GATT_CMD_WRITE:
+        case GATT_CMD_SIGNED_WRITE:
+            result = hci_control_le_write_handler(p_req->conn_id,
+                    p_req->opcode,
+                    &(p_req->data.write_req));
+            if (result == WICED_BT_GATT_SUCCESS)
+            {
+                wiced_bt_gatt_server_send_write_rsp(
+                        p_req->conn_id,
+                        p_req->opcode,
+                        p_req->data.write_req.handle);
+            }
+            else
+            {
+                wiced_bt_gatt_server_send_error_rsp(
+                        p_req->conn_id,
+                        p_req->opcode,
+                        p_req->data.write_req.handle,
+                        result);
+            }
+            break;
+
+        case GATT_REQ_MTU:
+            result = hci_control_le_mtu_handler(p_req->conn_id,
+                    p_req->data.remote_mtu);
+            break;
+
+        case GATT_HANDLE_VALUE_CONF:
+            result = hci_control_le_conf_handler(p_req->conn_id,
+                    p_req->data.confirm.handle);
+            break;
+
+       default:
+            WICED_BT_TRACE("Invalid GATT request conn_id:%d opcode:%d\n",
+                    p_req->conn_id, p_req->opcode);
+            break;
+    }
+
+#else /* !BTSTACK_VER */
     switch ( p_req->request_type )
     {
         case GATTS_REQ_TYPE_READ:
@@ -590,6 +927,7 @@ wiced_bt_gatt_status_t hci_control_le_gatt_req_cb( wiced_bt_gatt_attribute_reque
             WICED_BT_TRACE("Invalid GATT request conn_id:%d type:%d\n", p_req->conn_id, p_req->request_type);
             break;
     }
+#endif /* BTSTACK_VER */
 
     return result;
 }
@@ -619,6 +957,27 @@ wiced_bt_gatt_status_t hci_control_le_gatt_callback( wiced_bt_gatt_evt_t event, 
     case GATT_ATTRIBUTE_REQUEST_EVT:
         result = hci_control_le_gatt_req_cb( &p_data->attribute_request );
         break;
+
+#if BTSTACK_VER > 0x01020000
+    case GATT_GET_RESPONSE_BUFFER_EVT:
+        p_data->buffer_request.buffer.p_app_rsp_buffer = wiced_bt_get_buffer(p_data->buffer_request.len_requested);
+        p_data->buffer_request.buffer.p_app_ctxt = wiced_bt_free_buffer;
+        result = WICED_BT_GATT_SUCCESS;
+        break;
+
+    case GATT_APP_BUFFER_TRANSMITTED_EVT:
+        {
+            void (*pfn_free)(uint8_t *) =
+                (void (*)(uint8_t *))p_data->buffer_xmitted.p_app_ctxt;
+
+            /* If the buffer is dynamic, the context will point to a function to free it. */
+            if (pfn_free)
+                pfn_free(p_data->buffer_xmitted.p_app_data);
+
+            result = WICED_BT_GATT_SUCCESS;
+        }
+        break;
+#endif /* BTSTACK_VER */
 
     default:
         break;
