@@ -237,7 +237,7 @@ typedef struct
     void     *p_attr;
 } attribute_t;
 
-uint8_t btheadset_sensor_device_name[]          = "HeadsetPro";
+uint8_t btheadset_sensor_device_name[]          = "HSPK LE";
 uint8_t btheadset_sensor_appearance_name[2]     = { BIT16_TO_8(APPEARANCE_GENERIC_TAG) };
 char    btheadset_sensor_char_notify_value[]    = { 'H', 'e', 'l', 'l', 'o', ' ', '0', };
 char    btheadset_sensor_char_mfr_name_value[]  = { 'C', 'y', 'p', 'r', 'e', 's', 's', 0, };

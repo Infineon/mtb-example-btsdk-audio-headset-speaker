@@ -486,7 +486,10 @@ wiced_result_t btheadset_post_bt_init(void)
 #endif
 
 #ifdef AUTO_ELNA_SWITCH
-    wiced_hal_rfm_auto_elna_switch(1, TX_PU, RX_PU);
+    wiced_hal_rfm_auto_elna_enable(1, RX_PU);
+#endif
+#ifdef AUTO_EPA_SWITCH
+    wiced_hal_rfm_auto_epa_enable(1, TX_PU);
 #endif
 
     return WICED_SUCCESS;

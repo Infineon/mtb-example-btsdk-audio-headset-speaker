@@ -82,6 +82,7 @@ AAC_SUPPORT ?= 1
 # SPEAKER option is not applicable for CYW9M2BASE-43012BT kit
 SPEAKER ?= 0
 AUTO_ELNA_SWITCH ?= 0
+AUTO_EPA_SWITCH ?= 0
 ENABLE_DEBUG?=0
 
 -include internal.mk
@@ -161,6 +162,7 @@ COMPONENTS += codec_cs47l35_lib
 COMPONENTS += led_manager
 CY_APP_PATCH_LIBS += wiced_mem_lib.a
 AUTO_ELNA_SWITCH = 1
+AUTO_EPA_SWITCH = 1
 endif # TARGET
 
 ifeq ($(TARGET),CYW920721M2EVK-01)
@@ -230,6 +232,10 @@ endif
 
 ifeq ($(AUTO_ELNA_SWITCH),1)
 CY_APP_DEFINES += -DAUTO_ELNA_SWITCH
+endif
+
+ifeq ($(AUTO_EPA_SWITCH),1)
+CY_APP_DEFINES += -DAUTO_EPA_SWITCH
 endif
 
 ifeq ($(AAC_SUPPORT), 1)
