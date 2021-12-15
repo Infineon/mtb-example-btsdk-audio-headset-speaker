@@ -197,7 +197,7 @@ uint8_t bt_avrc_ct_supported_events[] =
  ****************************************************************************/
 #define WICED_DEVICE_NAME                       APPNAME
 
-#if BTSTACK_VER > 0x01020000
+#if BTSTACK_VER >= 0x03000001
 /* BLE SCAN Setting */
 const wiced_bt_cfg_ble_scan_settings_t wiced_bt_cfg_scan_settings =
 {
@@ -343,7 +343,7 @@ const wiced_bt_cfg_settings_t wiced_bt_cfg_settings =
     .p_l2cap_app_cfg = &wiced_bt_cfg_l2cap_app,
 };
 
-#else /* !BTSTACK_VER || BTSTACK_VER == 0x01020000 */
+#else /* !BTSTACK_VER*/
 const wiced_bt_cfg_settings_t wiced_bt_cfg_settings =
 {
     .device_name                         = (uint8_t *)WICED_DEVICE_NAME,                               /**< Local device name (NULL terminated) */
@@ -454,7 +454,7 @@ const wiced_bt_cfg_settings_t wiced_bt_cfg_settings =
         /* LE L2cap fixed channel configuration */
         .max_le_l2cap_fixed_channels    = 0,                                                           /**< Maximum number of application managed fixed channels supported (in addition to mandatory channels 4, 5 and 6). > */
 #endif
-#if BTSTACK_VER >= 0x01020000
+#if BTSTACK_VER >= 0x03000001
         .max_rx_mtu                     = 1000,                                                        /**< Maximum RX MTU allowed */
         .max_ertm_chnls                 = 0,                                                           /**< Maximum ERTM channels */
         .max_ertm_tx_win                = 0,                                                           /**< Maximum ERTM TX Window */
@@ -494,19 +494,15 @@ const wiced_bt_cfg_settings_t wiced_bt_cfg_settings =
 #else
     .rpa_refresh_timeout                = 0,                                                           /**< Interval of  random address refreshing - secs */
 #endif
-#if BTSTACK_VER >= 0x01020000
+#if BTSTACK_VER >= 0x03000001
     .stack_scratch_size                 = WICED_BT_CFG_DEFAULT_STACK_SCRATCH_SIZE,                     /**< Memory area reserved for the stack transient memory requirements */
 #endif
     /* BLE Filter Accept List size */
     .ble_filter_accept_list_size                = 0,                                                           /**< Maximum number of Filter Accept List devices allowed. Cannot be more than 128 */
 #endif
 
-#if defined(CYW20719B2) || defined(CYW20721B2) || defined(CYW20819A1) || defined (CYW20820A1) || BTSTACK_VER >= 0x01020000
+#if defined(CYW20719B2) || defined(CYW20721B2) || defined(CYW20819A1) || defined (CYW20820A1) || BTSTACK_VER >= 0x03000001
     .default_ble_power_level            = 12,                                                          /**< Default LE power level, Refer lm_TxPwrTable table for the power range */
-#endif
-#if BTSTACK_VER == 0x01020000
-    .max_gatt_bearers                   = 3,                                                           /**< Maximum number of allowed gatt bearers */
-    .use_gatt_over_br_edr               = 1,                                                           /**< set to 1 to enable gatt over br edr */
 #endif
 };
 #endif /* BTSTACK_VER */

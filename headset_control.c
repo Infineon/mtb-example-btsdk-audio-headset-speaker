@@ -102,11 +102,13 @@
 #include "wiced_transport.h"
 #include "wiced_app.h"
 #include "wiced_bt_a2dp_sink.h"
-#if BTSTACK_VER > 0x01020000
+#if BTSTACK_VER >= 0x03000001
 #include "wiced_audio_sink_route_config.h"
 #endif
 #include "platform_led.h"
+#ifndef PLATFORM_LED_DISABLED
 #include "wiced_led_manager.h"
+#endif // !PLATFORM_LED_DISABLED
 #include "bt_hs_spk_button.h"
 #include "wiced_audio_manager.h"
 #include "wiced_hal_gpio.h"
@@ -167,7 +169,7 @@ const wiced_transport_cfg_t transport_cfg =
         .mode = WICED_TRANSPORT_UART_HCI_MODE,
         .baud_rate = HCI_UART_DEFAULT_BAUD,
     },
-#ifdef NEW_DYNAMIC_MEMORY_INCLUDED
+#if BTSTACK_VER >= 0x03000001
     .heap_config =
     {
         .data_heap_size = 1024 * 4 + 1500 * 2,
@@ -221,8 +223,8 @@ static headset_control_local_irk_info_t local_irk_info = {0};
 static bt_hs_spk_audio_insert_config_t app_audio_insert_config = {0};
 #endif
 
-#if BTSTACK_VER >= 0x01020000
-#define BT_STACK_HEAP_SIZE          1024 * 6
+#if BTSTACK_VER >= 0x03000001
+#define BT_STACK_HEAP_SIZE          1024 * 7
 wiced_bt_heap_t *p_default_heap = NULL;
 #endif
 
@@ -304,7 +306,8 @@ void btheadset_control_init( void )
 #endif // CYW43012C0
 #else // NO_PUART_SUPPORT
 #ifdef CYW55572
-    // wiced_platform_init already handled it
+    // Default PUART baudrate is 115200, update it to 3M before calling wiced_set_debug_uart(WICED_ROUTE_DEBUG_TO_PUART);
+    wiced_set_debug_uart_baudrate(3000000);
 #else
     // Set to PUART to see traces on peripheral uart(puart)
     wiced_hal_puart_init();
@@ -327,7 +330,12 @@ void btheadset_control_init( void )
     WICED_BT_TRACE( "# headset_speaker APP START #\n" );
     WICED_BT_TRACE( "#########################\n" );
 
-#if BTSTACK_VER >= 0x01020000
+#ifdef CYW20721B2
+    /* Disable secure connection because connection will drop when connecting with Win10 first time */
+    wiced_bt_dev_lrac_disable_secure_connection();
+#endif
+
+#if BTSTACK_VER >= 0x03000001
     /* Create default heap */
     p_default_heap = wiced_bt_create_heap("default_heap", NULL, BT_STACK_HEAP_SIZE, NULL,
             WICED_TRUE);
@@ -338,7 +346,7 @@ void btheadset_control_init( void )
     }
 #endif
 
-#if BTSTACK_VER >= 0x01020000
+#if BTSTACK_VER >= 0x03000001
     ret = wiced_bt_stack_init(btheadset_control_management_callback, &wiced_bt_cfg_settings);
 #else
     ret = wiced_bt_stack_init(btheadset_control_management_callback, &wiced_bt_cfg_settings, wiced_app_cfg_buf_pools);
@@ -348,7 +356,7 @@ void btheadset_control_init( void )
         WICED_BT_TRACE("wiced_bt_stack_init returns error: %d\n", ret);
         return;
     }
-#if BTSTACK_VER > 0x01020000
+#if BTSTACK_VER >= 0x03000001
     WICED_BT_TRACE ("Device Class: 0x%02x%02x%02x\n",
             wiced_bt_cfg_settings.p_br_cfg->device_class[0],
             wiced_bt_cfg_settings.p_br_cfg->device_class[1],
@@ -784,7 +792,7 @@ static uint32_t headset_control_proc_rx_cmd( uint8_t *p_buffer, uint32_t length 
     if(( length < 4 ) || (p_data == NULL))
     {
         WICED_BT_TRACE("invalid params\n");
-#ifndef NEW_DYNAMIC_MEMORY_INCLUDED
+#ifndef BTSTACK_VER
         wiced_transport_free_buffer( p_buffer );
 #endif
         return HCI_CONTROL_STATUS_INVALID_ARGS;
@@ -840,7 +848,7 @@ static uint32_t headset_control_proc_rx_cmd( uint8_t *p_buffer, uint32_t length 
         break;
     }
 
-#ifndef NEW_DYNAMIC_MEMORY_INCLUDED
+#ifndef BTSTACK_VER
     // Freeing the buffer in which data is received
     wiced_transport_free_buffer( p_buffer );
 #endif

@@ -76,7 +76,7 @@
 
 #ifdef FASTPAIR_ENABLE
 /* MODEL-specific definitions */
-#if defined(CYW20721B2) || defined(CYW43012C0) || BTSTACK_VER >= 0x01020000
+#if defined(CYW20721B2) || defined(CYW43012C0) || BTSTACK_VER >= 0x03000001
 #define FASTPAIR_MODEL_ID                   0x82DA6E
 #else
 #define FASTPAIR_MODEL_ID                   0xCE948F //0xB49236 //0x000107 //0x140A02 // 0xCE948F
@@ -258,7 +258,7 @@ attribute_t gauAttributes[] =
     { HANDLE_HSENS_BATTERY_SERVICE_CHAR_LEVEL_VAL,      1,                                            &btheadset_battery_level },
 };
 
-#if BTSTACK_VER >= 0x01020000
+#if BTSTACK_VER >= 0x03000001
 wiced_bt_db_hash_t headset_db_hash;
 #endif
 
@@ -292,9 +292,12 @@ void hci_control_le_enable( void )
     WICED_BT_TRACE( "hci_control_le_enable\n" );
 
     /*  GATT DB Initialization */
-#if BTSTACK_VER >= 0x01020000
+#if BTSTACK_VER >= 0x03000001
     gatt_status = wiced_bt_gatt_db_init(gatt_server_db, sizeof(gatt_server_db),
             headset_db_hash);
+#ifdef FASTPAIR_ENABLE
+    wiced_bt_dev_set_no_smp_on_br(WICED_TRUE);
+#endif
 #else
     gatt_status = wiced_bt_gatt_db_init(gatt_server_db, sizeof(gatt_server_db));
 #endif
@@ -450,7 +453,7 @@ attribute_t * hci_control_get_attribute( uint16_t handle )
     return NULL;
 }
 
-#if BTSTACK_VER > 0x01020000
+#if BTSTACK_VER >= 0x03000001
 /*
  * Process Read request from peer device
  */
@@ -838,7 +841,7 @@ wiced_bt_gatt_status_t hci_control_le_gatt_req_cb( wiced_bt_gatt_attribute_reque
 {
     wiced_bt_gatt_status_t result  = WICED_BT_GATT_SUCCESS;
 
-#if BTSTACK_VER > 0x01020000
+#if BTSTACK_VER >= 0x03000001
     switch (p_req->opcode)
     {
         case GATT_REQ_READ:
@@ -958,7 +961,7 @@ wiced_bt_gatt_status_t hci_control_le_gatt_callback( wiced_bt_gatt_evt_t event, 
         result = hci_control_le_gatt_req_cb( &p_data->attribute_request );
         break;
 
-#if BTSTACK_VER > 0x01020000
+#if BTSTACK_VER >= 0x03000001
     case GATT_GET_RESPONSE_BUFFER_EVT:
         p_data->buffer_request.buffer.p_app_rsp_buffer = wiced_bt_get_buffer(p_data->buffer_request.len_requested);
         p_data->buffer_request.buffer.p_app_ctxt = wiced_bt_free_buffer;
