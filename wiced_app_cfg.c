@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2021, Cypress Semiconductor Corporation (an Infineon company) or
+ * Copyright 2016-2022, Cypress Semiconductor Corporation (an Infineon company) or
  * an affiliate of Cypress Semiconductor Corporation.  All rights reserved.
  *
  * This software, including source code, documentation and related
@@ -54,7 +54,10 @@
 #define sizeof_array(a) (sizeof(a)/sizeof(a[0]))
 
 #if (WICED_A2DP_EXT_CODEC == WICED_TRUE)
+#ifndef CYW55572
+/* 55572A1 has internal AAC-LC decoder, it doesn't need to use ia_aaclc_lib */
 extern wiced_codec_interface_functions_t AAC_codec_function_table;
+#endif
 #endif
 
 #if (WICED_BT_HFP_HF_WBS_INCLUDED == TRUE)
@@ -145,7 +148,10 @@ wiced_bt_a2dp_config_data_t bt_audio_config =
     {
 #ifdef A2DP_SINK_AAC_ENABLED
         .codec_id        = WICED_AUDIO_CODEC_AAC_DEC,
+#ifndef CYW55572
+        /* 55572A1 has internal AAC-LC decoder, it doesn't need to use ia_aaclc_lib */
         .codec_functions = &AAC_codec_function_table,
+#endif
 #else
         .codec_id        = WICED_AUDIO_CODEC_NONE,
         .codec_functions = NULL,

@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2021, Cypress Semiconductor Corporation (an Infineon company) or
+ * Copyright 2016-2022, Cypress Semiconductor Corporation (an Infineon company) or
  * an affiliate of Cypress Semiconductor Corporation.  All rights reserved.
  *
  * This software, including source code, documentation and related
@@ -330,7 +330,7 @@ void btheadset_control_init( void )
     WICED_BT_TRACE( "# headset_speaker APP START #\n" );
     WICED_BT_TRACE( "#########################\n" );
 
-#ifdef CYW20721B2
+#if defined(CYW20721B2) || defined(CYW43012C0)
     /* Disable secure connection because connection will drop when connecting with Win10 first time */
     wiced_bt_dev_lrac_disable_secure_connection();
 #endif

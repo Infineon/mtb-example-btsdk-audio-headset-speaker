@@ -1,5 +1,5 @@
 #
-# Copyright 2016-2021, Cypress Semiconductor Corporation (an Infineon company) or
+# Copyright 2016-2022, Cypress Semiconductor Corporation (an Infineon company) or
 # an affiliate of Cypress Semiconductor Corporation.  All rights reserved.
 #
 # This software, including source code, documentation and related
@@ -42,10 +42,9 @@ CONFIG=Debug
 VERBOSE=
 
 # default target
-TARGET=CYW920721B2EVK-02
+TARGET=CYW920721M2EVK-02
 
 SUPPORTED_TARGETS = \
-  CYW920721B2EVK-02 \
   CYW9M2BASE-43012BT \
   CYW920721M2EVK-01 \
   CYW920721M2EVK-02 \
@@ -155,18 +154,6 @@ COMPONENTS += audio_record_lib
 COMPONENTS += nanopbuf
 endif
 
-ifeq ($(TARGET),CYW920721B2EVK-02)
-CY_APP_DEFINES += -DBT_HS_SPK_CONTROL_LINK_KEY_COUNT=8
-CY_APP_DEFINES += -DAUDIO_INSERT_ENABLED
-CY_APP_DEFINES += -DCS47L35_CODEC_ENABLE
-CY_APP_DEFINES += -DCT_HANDLE_PASSTHROUGH_COMMANDS
-COMPONENTS += cyw9bt_audio2
-COMPONENTS += codec_cs47l35_lib
-CY_APP_PATCH_LIBS += wiced_mem_lib.a
-AUTO_ELNA_SWITCH = 1
-AUTO_EPA_SWITCH = 1
-endif # TARGET
-
 ifeq ($(TARGET),CYW920721M2EVK-01)
 CY_APP_DEFINES += -DBT_HS_SPK_CONTROL_LINK_KEY_COUNT=8
 CY_APP_DEFINES += -DAUDIO_INSERT_ENABLED
@@ -228,7 +215,6 @@ endif # TARGET
 
 ifeq ($(TARGET),CYW955572BTEVK-01)
 # Application Configuration
-AAC_SUPPORT := 0
 OTA_FW_UPGRADE := 0
 CY_APP_DEFINES += -DAPP_CFG_ENABLE_BR_AUDIO=1
 CY_APP_DEFINES += -DWICED_BT_HFP_HF_WBS_INCLUDED=TRUE
@@ -276,7 +262,9 @@ CY_APP_DEFINES += -DAUTO_EPA_SWITCH
 endif
 
 ifeq ($(AAC_SUPPORT), 1)
+ifneq ($(TARGET),CYW955572BTEVK-01)
 CY_APP_PATCH_LIBS += ia_aaclc_lib.a
+endif
 CY_APP_DEFINES += -DWICED_BT_A2DP_SINK_MAX_NUM_CODECS=2
 CY_APP_DEFINES += -DA2DP_SINK_AAC_ENABLED
 CY_APP_DEFINES += -DWICED_A2DP_EXT_CODEC=1
