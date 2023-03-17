@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2022, Cypress Semiconductor Corporation (an Infineon company) or
+ * Copyright 2016-2023, Cypress Semiconductor Corporation (an Infineon company) or
  * an affiliate of Cypress Semiconductor Corporation.  All rights reserved.
  *
  * This software, including source code, documentation and related
@@ -46,8 +46,8 @@
  *  - HCI Client Control is not supported.
  *
  * Setting up Connection
- * 1. press and hold the SW15 on BT board for at least 2 seconds.
- * 2. This will set device in discovery mode(A2DP,HFP and BLE) and LED will start blinking.
+ * 1. press and hold the SW15 on the EVAL board for at least 2 seconds.
+ * 2. This will set device in discovery mode(A2DP, HFP, and LE) and LED will start blinking.
  * 3. Scan for 'headsetpro' device on the peer source device, and pair with the headsetpro.
  * 4. Once connected LED will stop blinking and turns on.
  * 5. If no connection is established within 30sec,LED will turn off and device is not be discoverable,repeat instructions from step 1 to start again.
@@ -57,7 +57,7 @@
  * 2. You can control play back and volume from peer device (Play, Pause, Stop) controls.
  *
  * AVRCP
- * 1. We can use buttons connected to the BT EVAL board for AVRCP control
+ * 1. We can use buttons connected to the EVAL board for AVRCP control
  * 2. SW15 - Discoverable/Play/Pause    - Long press this button to enter discoverable mode. Click the button to Play/Pause the music play back.
  * 3. SW16 -                            - No function
  * 4. SW17 - Volume Up/Forward          - Click this button to increase volume or long press the button to forward
@@ -76,8 +76,8 @@
  * 8. Every click of SW17(Volume Up) button will increase the volume
  * 9. Every click of SW18(Volume down) button will decrease the volume
  *
- * BLE
- *  - To connect Ble device: set bt headset in discovery mode by long press of SW15 button
+ * LE
+ *  - To connect a Bluetooth LE device: set Bluetooth headset in discovery mode by long press of SW15 button
  *    search for 'HSPK' device in peer side phone app (Ex:BLEScanner for Android and LightBlue for iOS) and connect.
  *  - From the peer side app you should be able to do GATT read/write of the elements listed.
  */
@@ -285,7 +285,7 @@ static void headset_control_local_irk_update(uint8_t *p_key)
 
 /*
  *  btheadset_control_init
- *  Does bt stack and audio buffer init
+ *  Does Bluetooth stack and audio buffer init
  */
 void btheadset_control_init( void )
 {
@@ -373,7 +373,7 @@ void btheadset_control_init( void )
         return;
     }
 
-    /* Restore local Identify Resolving Key (IRK) for BLE Private Resolvable Address. */
+    /* Restore local Identify Resolving Key (IRK) for LE Private Resolvable Address. */
     headset_control_local_irk_restore();
 }
 
@@ -626,7 +626,7 @@ wiced_result_t btheadset_control_management_callback( wiced_bt_management_evt_t 
             break;
 
         case BTM_PAIRING_IO_CAPABILITIES_BLE_REQUEST_EVT:
-            /* Use the default security for BLE */
+            /* Use the default security for LE */
             WICED_BT_TRACE("BTM_PAIRING_IO_CAPABILITIES_BLE_REQUEST_EVT bda %B\n",
                     p_event_data->pairing_io_capabilities_ble_request.bd_addr);
 
@@ -648,7 +648,7 @@ wiced_result_t btheadset_control_management_callback( wiced_bt_management_evt_t 
             else
             {
                 pairing_result = p_pairing_cmpl->pairing_complete_info.ble.reason;
-                WICED_BT_TRACE( "BLE Pairing Result: %02x\n", pairing_result );
+                WICED_BT_TRACE( "LE Pairing Result: %02x\n", pairing_result );
             }
             //btheadset_control_pairing_completed_evt( pairing_result, p_event_data->pairing_complete.bd_addr );
             break;
@@ -733,7 +733,7 @@ wiced_result_t btheadset_control_management_callback( wiced_bt_management_evt_t 
                            p_event_data->ble_connection_param_update.supervision_timeout);
             break;
         case BTM_BLE_PHY_UPDATE_EVT:
-            /* BLE PHY Update to 1M or 2M */
+            /* LE PHY Update to 1M or 2M */
             WICED_BT_TRACE("PHY config is updated as TX_PHY : %dM, RX_PHY : %dM\n",
                     p_event_data->ble_phy_update_event.tx_phy,
                     p_event_data->ble_phy_update_event.rx_phy);

@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2022, Cypress Semiconductor Corporation (an Infineon company) or
+ * Copyright 2016-2023, Cypress Semiconductor Corporation (an Infineon company) or
  * an affiliate of Cypress Semiconductor Corporation.  All rights reserved.
  *
  * This software, including source code, documentation and related
@@ -46,7 +46,7 @@ extern const uint8_t pincode[WICED_PIN_CODE_LEN];
 #define WICED_APP_AUDIO_RC_CT_INCLUDED      FALSE
 #define WICED_APP_AUDIO_SINK_INCLUDED       TRUE
 
-/* BLE Profiles/Applications */
+/* LE Profiles/Applications */
 #define WICED_APP_ANCS_INCLUDED             FALSE
 #define WICED_APP_TEST_INCLUDED             FALSE
 

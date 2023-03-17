@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2022, Cypress Semiconductor Corporation (an Infineon company) or
+ * Copyright 2016-2023, Cypress Semiconductor Corporation (an Infineon company) or
  * an affiliate of Cypress Semiconductor Corporation.  All rights reserved.
  *
  * This software, including source code, documentation and related
@@ -305,7 +305,7 @@ void hci_control_le_enable( void )
     WICED_BT_TRACE("wiced_bt_gatt_db_init %d\n", gatt_status);
 
 #ifdef FASTPAIR_ENABLE
-    // set Tx power level data type in ble advertisement
+    // set Tx power level data type in LE advertisement
 #if defined(CYW20719B2) || defined(CYW20721B2) || defined(CYW20819A1) || defined (CYW20820A1)
     fastpair_conf.ble_tx_pwr_level = wiced_bt_cfg_settings.default_ble_power_level;
 #else
@@ -344,7 +344,7 @@ void hci_control_le_enable( void )
     // NVRAM id for Account Key list
     fastpair_conf.account_key_list_nvram_id = HEADSET_NVRAM_ID_GFPS_ACCOUNT_KEY;
 
-    // BLE advertisement appended to fast pair advertisement data
+    // LE advertisement appended to fast pair advertisement data
     dev_name_len = strlen((char *) wiced_bt_cfg_settings.device_name) +
                    strlen(appended_ble_dev_name);
 
@@ -389,7 +389,7 @@ void hci_control_le_enable( void )
 
 #endif
 
-    /* Register the BLE discoverability change callback. */
+    /* Register the LE discoverability change callback. */
     bt_hs_spk_ble_discoverability_change_callback_register(&headset_control_le_discoverabilty_change_callback);
 
 }
