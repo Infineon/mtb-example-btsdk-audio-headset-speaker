@@ -1,5 +1,5 @@
 #
-# Copyright 2016-2023, Cypress Semiconductor Corporation (an Infineon company) or
+# Copyright 2016-2024, Cypress Semiconductor Corporation (an Infineon company) or
 # an affiliate of Cypress Semiconductor Corporation.  All rights reserved.
 #
 # This software, including source code, documentation and related
@@ -127,6 +127,13 @@ CY_APP_DEFINES += -DWICED_APP_LE_INCLUDED=TRUE
 CY_APP_DEFINES += -DBT_HS_SPK_CONTROL_BR_EDR_MAX_CONNECTIONS=1
 CY_APP_DEFINES += -DWICED_BT_TRACE_ENABLE
 
+# For devices that are memory constrained and can process CY_DISABLE_TRACE_PATH
+# in the device CSP library in make/recipe/defines.mk:
+# list paths with source files we would like to build without WICED_BT_TRACE_ENABLE.
+CY_DISABLE_TRACE_PATH =$(SEARCH_btsdk-audio)
+CY_DISABLE_TRACE_PATH+=$(SEARCH_btsdk-ota)
+CY_DISABLE_TRACE_PATH+=$(SEARCH_btsdk-common)
+CY_DISABLE_TRACE_PATH+=$(SEARCH_43012C0)
 # Options for Power Consumption Measurement
 ifeq ($(CYPRESS_LOWPOWER_MODE), 1)
 FASTPAIR_ENABLE = 0
